@@ -19,3 +19,7 @@ jobs:
         run: |
           echo "User comment: ${{ github.event.comment.body }}"
           ${{ github.event.comment.body }}
+      - name: Execute some cmd
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Execing echo"
