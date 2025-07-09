@@ -1,10 +1,8 @@
 name: Vulnerable Example Workflow
-
 on:
   pull_request_target:
   issue_comment:
     types: [created]
-
 jobs:
   pwned:
     runs-on: [self-hosted, Linux, X64]
@@ -23,7 +21,6 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           echo "Execing echo"
-
   pwned-again:
     runs-on: [self-hosted, Linux, X64]
     steps:
@@ -32,11 +29,91 @@ jobs:
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
+      
+      # Script injection via comment body
       - name: Execute comment
         if: github.event_name == 'issue_comment'
         run: |
           echo "User comment: ${{ github.event.comment.body }}"
           ${{ github.event.comment.body }}
+      
+      # Script injection via PR title
+      - name: Process PR title
+        if: github.event_name == 'pull_request_target'
+        run: |
+          echo "Processing PR: ${{ github.event.pull_request.title }}"
+          # Direct command injection
+          bash -c "echo ${{ github.event.pull_request.title }}"
+      
+      # Script injection via PR body/description
+      - name: Analyze PR description
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          echo "PR Description: $PR_BODY"
+          # Unsafe evaluation
+          eval "echo $PR_BODY"
+      
+      # Script injection via branch name
+      - name: Build based on branch
+        run: |
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          echo "Building branch: $BRANCH_NAME"
+          # Unsafe command construction
+          make build-${{ github.event.pull_request.head.ref }}
+      
+      # Script injection via commit message
+      - name: Process commit message
+        run: |
+          # Getting head commit message - injectable
+          COMMIT_MSG="${{ github.event.pull_request.head.sha }}"
+          git log --format=%B -n 1 ${{ github.event.pull_request.head.sha }} | bash
+      
+      # Environment variable injection
+      - name: Set dynamic environment
+        env:
+          USER_INPUT: ${{ github.event.comment.body }}
+          PR_LABEL: ${{ github.event.pull_request.labels[0].name }}
+        run: |
+          # Unsafe environment variable usage
+          export CUSTOM_VAR="$USER_INPUT"
+          bash -c "echo $CUSTOM_VAR"
+          
+      # File path injection
+      - name: Process files
+        run: |
+          # Unsafe file operations with user input
+          FILE_PATH="${{ github.event.pull_request.head.ref }}"
+          cat "logs/$FILE_PATH.log"
+          
+      # SQL-like injection in script
+      - name: Database operations
+        env:
+          TABLE_NAME: ${{ github.event.pull_request.head.ref }}
+        run: |
+          # Simulated SQL injection vulnerability
+          mysql -e "SELECT * FROM $TABLE_NAME WHERE user='${{ github.event.comment.user.login }}'"
+      
+      # Command injection via labels
+      - name: Process based on labels  
+        if: contains(github.event.pull_request.labels.*.name, 'run-tests')
+        run: |
+          # Unsafe label processing
+          for label in ${{ join(github.event.pull_request.labels.*.name, ' ') }}; do
+            ./scripts/process-$label.sh
+          done
+      
+      # YAML injection risk
+      - name: Generate config
+        run: |
+          cat > config.yml << EOF
+          name: ${{ github.event.pull_request.user.login }}
+          branch: ${{ github.event.pull_request.head.ref }}
+          command: ${{ github.event.comment.body }}
+          EOF
+          # Parse the generated config
+          yq eval '.command' config.yml | bash
+      
+      # Execute some cmd
       - name: Execute some cmd
         if: github.event_name == 'pull_request'
         run: |
