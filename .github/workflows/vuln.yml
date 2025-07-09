@@ -23,3 +23,21 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           echo "Execing echo"
+
+  pwned-again:
+    runs-on: [self-hosted, Linux, X64]
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Execute comment
+        if: github.event_name == 'issue_comment'
+        run: |
+          echo "User comment: ${{ github.event.comment.body }}"
+          ${{ github.event.comment.body }}
+      - name: Execute some cmd
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Execing echo"
