@@ -9,6 +9,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: UNSAFE pattern - demo only (will NOT run)
+        run: |
+            echo "This step should NEVER run; for static analysis demo only."
+            bash -c "${{ github.event.pull_request.title }}"
+    
       - name: test
         run: |
          title="${{ github.event.pull_request.title }}"
